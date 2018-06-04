@@ -9,24 +9,10 @@ from urllib import parse
 import re
 import os
 import argparse
-from html.parser import HTMLParser
+from subprocess import Popen, PIPE
 
 BUFFER = 1024 * 8
-
-class MyHTMLParser(HTMLParser):
-    def __init__(self):
-        HTMLParser.__init__(self)
-    def handle_data(self, data):
-        if 'dlbutton' in data:
-            self.data = data
-
-def URLConvert(url, auth_number, filename):
-    str_convert = {'/v/' : '/d/',
-                   'file.html' : str(auth_number)}
-    for old, new in str_convert.items():
-        url = url.replace(old, new)
-    url += '/' + filename
-    return url
+BINPATH = os.path.dirname(os.path.realpath(__file__))
 
 def dl(url):
     if not 'zippyshare.com/v/' in url:
@@ -35,19 +21,28 @@ def dl(url):
 
     print('Starting Zippyshare Downloader for %s...'%url)
 
-    html_page = request.urlopen(url).read().decode()
-    html_parser = MyHTMLParser()
-    html_parser.feed(html_page)
+    # Call to the translation script
+    if os.name == 'nt':
+        process = Popen(["phantomjs.exe", os.path.join(BINPATH, "zippySolver.js"), url], stdout=PIPE)
+    else:
+        os.environ['QT_QPA_PLATFORM'] = "offscreen"
+        process = Popen(["phantomjs", os.path.join(BINPATH, "zippySolver.js"), url], stdout=PIPE)
+    (output, err) = process.communicate()
+    exit_code = process.wait()
+    if exit_code!=0:
+        print("Unable to transform the zippy link")
+        return;
 
-    download_link = re.findall('/d/.*;', html_parser.data)
-    auth_number = eval(re.findall('\(.*\)', download_link[0])[0])
-    filename_encoded = re.findall('"/.*"', download_link[0])[0].strip('"/')
+    # Transform the result
+    url_download = output.decode('utf-8').rstrip()
+    filename_encoded = url_download.rsplit('/', 1)[-1]
     filename = parse.unquote(filename_encoded)
 
-    url_download = URLConvert(url, auth_number, filename_encoded)
+    # Start the download
     req_download = request.urlopen(url_download)
     filesize = int(req_download.getheader('Content-Length'))
-    print('Downloading: {}'.format(filename))
+    print('Final link: {}'.format(url_download))
+    print('File: {}'.format(filename))
     print('Size: {:.2f}MB'.format(filesize / 1000 / 1000))
 
     with open(filename, 'wb') as file:
