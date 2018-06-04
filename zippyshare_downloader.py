@@ -9,24 +9,9 @@ from urllib import parse
 import re
 import os
 import argparse
-from html.parser import HTMLParser
+from subprocess import Popen, PIPE
 
 BUFFER = 1024 * 8
-
-class MyHTMLParser(HTMLParser):
-    def __init__(self):
-        HTMLParser.__init__(self)
-    def handle_data(self, data):
-        if 'dlbutton' in data:
-            self.data = data
-
-def URLConvert(url, auth_number, filename):
-    str_convert = {'/v/' : '/d/',
-                   'file.html' : str(auth_number)}
-    for old, new in str_convert.items():
-        url = url.replace(old, new)
-    url += '/' + filename
-    return url
 
 def dl(url):
     if not 'zippyshare.com/v/' in url:
@@ -35,16 +20,18 @@ def dl(url):
 
     print('Starting Zippyshare Downloader for %s...'%url)
 
-    html_page = request.urlopen(url).read().decode()
-    html_parser = MyHTMLParser()
-    html_parser.feed(html_page)
 
-    download_link = re.findall('/d/.*;', html_parser.data)
-    auth_number = eval(re.findall('\(.*\)', download_link[0])[0])
-    filename_encoded = re.findall('"/.*"', download_link[0])[0].strip('"/')
+    process = Popen(["phantomjs", "zippySolver.js", url], stdout=PIPE)
+    (output, err) = process.communicate()
+    exit_code = process.wait()
+
+    print("output:"+output.decode('utf-8'))
+
+    url_download = output.decode('utf-8').rstrip()
+
+    filename_encoded = re.findall('"/.*"', output)[0].strip('"/')
     filename = parse.unquote(filename_encoded)
 
-    url_download = URLConvert(url, auth_number, filename_encoded)
     req_download = request.urlopen(url_download)
     filesize = int(req_download.getheader('Content-Length'))
     print('Downloading: {}'.format(filename))
