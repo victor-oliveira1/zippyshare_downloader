@@ -25,6 +25,7 @@ def dl(url):
     if os.name == 'nt':
         process = Popen(["phantomjs.exe", os.path.join(BINPATH, "zippySolver.js"), url], stdout=PIPE)
     else:
+        os.environ['QT_QPA_PLATFORM'] = "offscreen"
         process = Popen(["phantomjs", os.path.join(BINPATH, "zippySolver.js"), url], stdout=PIPE)
     (output, err) = process.communicate()
     exit_code = process.wait()
