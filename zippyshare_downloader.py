@@ -12,6 +12,7 @@ import argparse
 from subprocess import Popen, PIPE
 
 BUFFER = 1024 * 8
+BINPATH = os.path.dirname(os.path.realpath(__file__))
 
 def dl(url):
     if not 'zippyshare.com/v/' in url:
@@ -20,21 +21,27 @@ def dl(url):
 
     print('Starting Zippyshare Downloader for %s...'%url)
 
-
-    process = Popen(["phantomjs", "zippySolver.js", url], stdout=PIPE)
+    # Call to the translation script
+    if os.name == 'nt':
+        process = Popen(["phantomjs.exe", os.path.join(BINPATH, "zippySolver.js"), url], stdout=PIPE)
+    else:
+        process = Popen(["phantomjs", os.path.join(BINPATH, "zippySolver.js"), url], stdout=PIPE)
     (output, err) = process.communicate()
     exit_code = process.wait()
+    if exit_code!=0:
+        print("Unable to transform the zippy link")
+        return;
 
-    print("output:"+output.decode('utf-8'))
-
+    # Transform the result
     url_download = output.decode('utf-8').rstrip()
-
-    filename_encoded = re.findall('"/.*"', output)[0].strip('"/')
+    filename_encoded = url_download.rsplit('/', 1)[-1]
     filename = parse.unquote(filename_encoded)
 
+    # Start the download
     req_download = request.urlopen(url_download)
     filesize = int(req_download.getheader('Content-Length'))
-    print('Downloading: {}'.format(filename))
+    print('Final link: {}'.format(url_download))
+    print('File: {}'.format(filename))
     print('Size: {:.2f}MB'.format(filesize / 1000 / 1000))
 
     with open(filename, 'wb') as file:
