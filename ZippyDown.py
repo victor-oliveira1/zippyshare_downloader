@@ -9,9 +9,13 @@ from urllib import parse
 import argparse
 
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+options = Options()
+options.headless = True
+driver = webdriver.Chrome(options=options)
 
 BUFFER = 1024 * 8
-driver = webdriver.PhantomJS()
 
 def Download(url, show_only=False, check=False):
     #Get the download URL using PhantomJS
