@@ -10,10 +10,8 @@ ZippyShare downloader written in Python3 using PhantomJS + selenium (Works on Wi
 **NOTE:** Zippyshare is changing the download algorithm regularly, and because of this, i'm using PhantomJS + selenium.  
   
 ## Installing:  
-You need to download PhantomJS and put in the PATH environment:  
-[Windows](https://www.joecolantonio.com/2014/10/14/how-to-install-phantomjs/)  
-[Linux](https://gist.github.com/julionc/7476620)  
-[MAC](http://macappstore.org/phantomjs/)  
+You need to download Chromedriver and put in the PATH environment:  
+http://chromedriver.chromium.org/
   
 And you need selenium module for Python 3:  
 [Selenium](https://pypi.org/project/selenium/)  
